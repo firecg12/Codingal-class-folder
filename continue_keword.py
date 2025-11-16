@@ -1,7 +1,7 @@
 var = 10
 
 while var > 0:
-
+    var = var -1
     if var == 5:
         continue  # Skip the rest of the loop when var is 5
 
