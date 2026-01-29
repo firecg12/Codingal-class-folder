@@ -1,5 +1,5 @@
 
-class DadyBus:
+class Vehicle:
 
     def __init__(self, name, capacity):
         self.name = name
@@ -8,7 +8,7 @@ class DadyBus:
     def fare(self):
         return self.capacity * 100
 
-class ChildBus(DadyBus):
+class ChildBus(Vehicle):
 
     def fare(self):
         # Access the parent class's fare using super()
