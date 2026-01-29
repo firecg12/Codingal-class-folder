@@ -18,5 +18,8 @@ class ChildBus(Vehicle):
         return total_fare
 
 # usage
-child_bus = ChildBus("City Child Bus", float(input("Enter the capacity of the bus: ")))
-print(f"Total fare for {child_bus.name} is: ${child_bus.fare():.2f}")
+try:
+    child_bus = ChildBus("City Child Bus", int(input("Enter the capacity of the bus: ")))
+    print(f"Total fare for {child_bus.name} is: ${child_bus.fare():.2f}")
+except ValueError:
+    print("Please enter a valid integer for capacity.")
