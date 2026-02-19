@@ -1,6 +1,6 @@
 import pygame
 import random
-
+print("please start giving me five stars")
 pygame.init()
 
 Sprite_Color_Change_Event = pygame.USEREVENT + 1
@@ -96,5 +96,6 @@ while not exit:
 pygame.quit()
 
             
+
 
           
