@@ -1,6 +1,8 @@
 import pygame
 import random
-print("please start giving me five stars")
+
+
+
 pygame.init()
 
 Sprite_Color_Change_Event = pygame.USEREVENT + 1
@@ -66,6 +68,11 @@ sp2.rect.y = random.randint(0, 360)
 
 all_sprites.add(sp2)
 
+# create a text sprite
+Black = pygame.Color('black')
+font = pygame.font.SysFont(None, 24)
+text_surface = font.render('please start giving me five stars', True, Black)
+
 screen = pygame.display.set_mode((500, 400))
 pygame.display.set_caption("BUDR SRT")
 
@@ -89,6 +96,7 @@ while not exit:
 
     screen.fill(background_color)
     all_sprites.draw(screen)
+    screen.blit(text_surface, (10, 10))  # Draw the text at the top-left corner
 
     pygame.display.flip()
     clock.tick(240)
@@ -96,6 +104,5 @@ while not exit:
 pygame.quit()
 
             
-
 
           
