@@ -1,0 +1,385 @@
+import pygame
+import random
+import math
+import json
+import os
+import sys
+
+pygame.init()
+
+# --------------------------------------------------
+# SETTINGS
+# --------------------------------------------------
+WIDTH = 1000
+HEIGHT = 600
+FPS = 60
+
+PLAYER_SPEED = 7
+BULLET_SPEED = 12
+ENEMY_SPEED = 2
+MAX_BULLETS = 3
+NUM_ENEMIES = 6
+
+PLAYER_LIVES = 3
+COLLISION_DISTANCE = 30
+
+LEADERBOARD_FILE = "leaderboard.json"
+
+fullscreen = False
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Alien Shooter")
+
+clock = pygame.time.Clock()
+
+# --------------------------------------------------
+# LOAD ASSETS
+# --------------------------------------------------
+background = pygame.image.load("Alien_background.jpg")
+
+player_img = pygame.image.load("player.png").convert_alpha()
+player_img = pygame.transform.scale(player_img, (60,60))
+
+enemy_img = pygame.image.load("enemy.png").convert_alpha()
+enemy_img = pygame.transform.scale(enemy_img, (70,70))
+
+bullet_img = pygame.image.load("bullet.png").convert_alpha()
+bullet_img = pygame.transform.scale(bullet_img, (18,38))
+explosion_img = pygame.image.load("explosion.png").convert_alpha()
+explosion_img = pygame.transform.scale(explosion_img,(80,80))
+
+font = pygame.font.Font(None,36)
+big_font = pygame.font.Font(None,80)
+
+# --------------------------------------------------
+# STARFIELD
+# --------------------------------------------------
+stars = []
+for i in range(90):
+    stars.append([
+        random.randint(0,WIDTH),
+        random.randint(0,HEIGHT),
+        random.randint(1,3)
+    ])
+
+# --------------------------------------------------
+# LEADERBOARD
+# --------------------------------------------------
+def load_scores():
+    if os.path.exists(LEADERBOARD_FILE):
+        with open(LEADERBOARD_FILE,"r") as f:
+            return json.load(f)
+    return []
+
+def save_score(score):
+    scores = load_scores()
+    scores.append(score)
+    scores = sorted(scores,reverse=True)[:10]
+
+    with open(LEADERBOARD_FILE,"w") as f:
+        json.dump(scores,f)
+
+def draw_leaderboard():
+    scores = load_scores()
+
+    title = big_font.render("TOP SCORES",True,(255,255,255))
+    screen.blit(title,(WIDTH//2-180,120))
+
+    y = 220
+    for s in scores:
+        t = font.render(str(s),True,(200,200,200))
+        screen.blit(t,(WIDTH//2-20,y))
+        y += 40
+
+# --------------------------------------------------
+# PLAYER
+# --------------------------------------------------
+player_x = WIDTH//2
+player_y = HEIGHT-80
+player_dx = 0
+lives = PLAYER_LIVES
+
+# --------------------------------------------------
+# BULLETS
+# --------------------------------------------------
+bullets = []
+
+# --------------------------------------------------
+# ENEMIES
+# --------------------------------------------------
+enemies = []
+for i in range(NUM_ENEMIES):
+    enemies.append({
+        "x": random.randint(0,WIDTH-60),
+        "y": random.randint(50,150),
+        "dx": ENEMY_SPEED,
+        "dy": 40
+    })
+
+# --------------------------------------------------
+# EFFECTS
+# --------------------------------------------------
+explosions = []
+powerups = []
+shake = 0
+
+# --------------------------------------------------
+# SCORE
+# --------------------------------------------------
+score = 0
+
+# --------------------------------------------------
+# CHEAT CODE
+# --------------------------------------------------
+cheat = []
+KONAMI = [
+pygame.K_UP, pygame.K_UP,
+pygame.K_DOWN, pygame.K_DOWN,
+pygame.K_LEFT, pygame.K_RIGHT,
+pygame.K_LEFT, pygame.K_RIGHT,
+pygame.K_b, pygame.K_a
+]
+
+# --------------------------------------------------
+# FUNCTIONS
+# --------------------------------------------------
+def toggle_fullscreen():
+    global screen, fullscreen
+    fullscreen = not fullscreen
+
+    if fullscreen:
+        screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode((WIDTH,HEIGHT))
+
+
+def collision(x1,y1,x2,y2):
+    return math.hypot(x1-x2,y1-y2) < COLLISION_DISTANCE
+
+
+def draw_player():
+    screen.blit(player_img,(player_x,player_y))
+
+
+def draw_enemy(enemy):
+    screen.blit(enemy_img,(enemy["x"],enemy["y"]))
+
+
+def draw_bullets():
+    for b in bullets:
+        screen.blit(bullet_img,(b["x"],b["y"]))
+
+
+def draw_explosions():
+    for boom in explosions:
+        screen.blit(explosion_img,(boom["x"],boom["y"]))
+
+
+def draw_powerups():
+    for p in powerups:
+        pygame.draw.circle(screen,(0,255,255),(p["x"],p["y"]),10)
+
+
+def draw_ui():
+    s = font.render(f"Score: {score}",True,(255,255,255))
+    l = font.render(f"Lives: {lives}",True,(255,255,255))
+
+    screen.blit(s,(10,10))
+    screen.blit(l,(10,40))
+
+
+def draw_stars():
+    for star in stars:
+        pygame.draw.circle(screen,(255,255,255),(star[0],star[1]),star[2])
+        star[1]+=star[2]
+
+        if star[1] > HEIGHT:
+            star[0]=random.randint(0,WIDTH)
+            star[1]=0
+
+
+def game_over_screen():
+    t = big_font.render("GAME OVER",True,(255,255,255))
+    screen.blit(t,(WIDTH//2-200,HEIGHT//2))
+
+
+# --------------------------------------------------
+# START SCREEN
+# --------------------------------------------------
+def start_screen():
+    waiting=True
+
+    while waiting:
+
+        screen.fill((10,10,25))
+
+        title = big_font.render("ALIEN SHOOTER",True,(255,255,255))
+        start = font.render("Press SPACE to start",True,(200,200,200))
+
+        screen.blit(title,(WIDTH//2-220,200))
+        screen.blit(start,(WIDTH//2-150,320))
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type==pygame.KEYDOWN:
+                if event.key==pygame.K_SPACE:
+                    waiting=False
+
+start_screen()
+
+# --------------------------------------------------
+# GAME LOOP
+# --------------------------------------------------
+running=True
+paused=False
+game_over=False
+
+while running:
+
+    clock.tick(FPS)
+
+    offset_x = random.randint(-shake,shake)
+    offset_y = random.randint(-shake,shake)
+
+    screen.blit(background,(offset_x,offset_y))
+    draw_stars()
+
+    shake=max(0,shake-1)
+
+    for event in pygame.event.get():
+
+        if event.type==pygame.QUIT:
+            running=False
+
+        if event.type==pygame.KEYDOWN:
+
+            cheat.append(event.key)
+            cheat[:] = cheat[-10:]
+
+            if cheat==KONAMI:
+                lives=99
+
+            if event.key==pygame.K_F11:
+                toggle_fullscreen()
+
+            if event.key==pygame.K_ESCAPE:
+                paused = not paused
+
+            if event.key==pygame.K_LEFT:
+                player_dx=-PLAYER_SPEED
+
+            if event.key==pygame.K_RIGHT:
+                player_dx=PLAYER_SPEED
+
+            if event.key==pygame.K_SPACE and not game_over:
+                if len(bullets)<MAX_BULLETS:
+                    bullets.append({
+                        "x":player_x+25,
+                        "y":player_y
+                    })
+
+        if event.type==pygame.KEYUP:
+            if event.key in (pygame.K_LEFT,pygame.K_RIGHT):
+                player_dx=0
+
+    if paused:
+        txt=big_font.render("PAUSED",True,(255,255,255))
+        screen.blit(txt,(WIDTH//2-140,HEIGHT//2))
+        pygame.display.update()
+        continue
+
+    if not game_over:
+
+        player_x+=player_dx
+        player_x=max(0,min(player_x,WIDTH-60))
+
+        for bullet in bullets[:]:
+            bullet["y"]-=BULLET_SPEED
+            if bullet["y"]<0:
+                bullets.remove(bullet)
+
+        for enemy in enemies:
+
+            enemy["x"]+=enemy["dx"]
+
+            if enemy["x"]<=0 or enemy["x"]>=WIDTH-60:
+                enemy["dx"]*=-1
+                enemy["y"]+=enemy["dy"]
+
+            if enemy["y"]>player_y:
+                lives-=1
+                enemy["x"]=random.randint(0,WIDTH-60)
+                enemy["y"]=random.randint(50,150)
+
+                if lives<=0:
+                    save_score(score)
+                    game_over=True
+
+            for bullet in bullets[:]:
+                if collision(enemy["x"],enemy["y"],bullet["x"],bullet["y"]):
+
+                    explosions.append({
+                        "x":enemy["x"],
+                        "y":enemy["y"],
+                        "timer":20
+                    })
+
+                    shake=10
+
+                    bullets.remove(bullet)
+
+                    if random.random()<0.15:
+                        powerups.append({
+                            "x":enemy["x"],
+                            "y":enemy["y"]
+                        })
+
+                    enemy["x"]=random.randint(0,WIDTH-60)
+                    enemy["y"]=random.randint(50,150)
+
+                    enemy["dx"]*=1.05
+
+                    score+=1
+
+        for boom in explosions[:]:
+            boom["timer"]-=1
+            if boom["timer"]<=0:
+                explosions.remove(boom)
+
+        for p in powerups[:]:
+            p["y"]+=3
+            if collision(player_x,player_y,p["x"],p["y"]):
+                powerups.remove(p)
+                MAX_BULLETS=6
+
+    draw_player()
+
+    for enemy in enemies:
+        draw_enemy(enemy)
+
+    draw_bullets()
+    draw_explosions()
+    draw_powerups()
+
+    draw_ui()
+
+    if score==25:
+        enemies.append({
+            "x":200,
+            "y":80,
+            "dx":6,
+            "dy":20
+        })
+
+    if game_over:
+        game_over_screen()
+        draw_leaderboard()
+
+    pygame.display.update()
+
+pygame.quit()
