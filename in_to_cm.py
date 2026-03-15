@@ -2,8 +2,8 @@
 from tkinter import *
 
 root = Tk()
-root.title("Inches to Centimeters")
-root.geometry("600x400")
+root.title("Length Converter App")
+root.geometry("400x400")
 
 frame = Frame(master=root, height=200, width=360, bg='lightblue')
 frame.place(x=120, y=50)
