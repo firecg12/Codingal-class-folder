@@ -1,3 +1,4 @@
+#i fixed the error when installing packages(tensorflow) by using py 10
 import tensorflow as tf
 from tensorflow.keras import layers, models
 import matplotlib.pyplot as plt
