@@ -1,3 +1,4 @@
+#i couldnt  realy find anny problems or faults in the code so i just changed some things up
 import time, pandas as pd
 from textblob import TextBlob
 from colorama import init, Fore
@@ -13,13 +14,13 @@ genres = sorted({g.strip() for xs in df["Genre"].dropna().str.split(", ") for g 
 def dots():
     for _ in range(3): print(Fore.YELLOW + ".", end="", flush=True); time.sleep(0.5)
 
-def senti(p): return "Positive 😊" if p > 0 else "Negative 😞" if p < 0 else "Neutral 😐"
+def senti(p): return "Nice 😊" if p > 0 else "AWW... 😞" if p < 0 else "Okay 😐"
 
 def recommend(genre=None, mood=None, rating=None, n=5):
     d = df
     if genre: d = d[d["Genre"].str.contains(genre, case=False, na=False)]
     if rating is not None: d = d[d["IMDB_Rating"] >= rating]
-    if d.empty: return "No suitable movie recommendations found."
+    if d.empty: return "Sorry I couldn't find suitable movie recommendations."
     d, need_nonneg, out = d.sample(frac=1).reset_index(drop=True), bool(mood), []
     for _, r in d.iterrows():
         ov = r.get("Overview")
@@ -28,7 +29,7 @@ def recommend(genre=None, mood=None, rating=None, n=5):
         if (not need_nonneg) or pol >= 0:
             out.append((r["Series_Title"], pol))
             if len(out) == n: break
-    return out if out else "No suitable movie recommendations found."
+    return out if out else "Sorry I couldn't find suitable movie recommendations."
 
 def show(recs, name):
     print(Fore.YELLOW + f"\n🍿 AI-Analyzed Movie Recommendations for {name}:")
