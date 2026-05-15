@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 
 
 
-# Load the image
 
 image = cv2.imread('example.jpg')
 
@@ -16,7 +15,6 @@ image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 
 
-# Show the original image
 
 plt.imshow(image_rgb)
 
@@ -38,7 +36,7 @@ plt.show()
 
 
 
-# Crop the image (assuming we want the region from 100:300, 200:400)
+
 
 cropped_image = image[100:300, 200:400]
 
@@ -52,7 +50,6 @@ plt.show()
 
 
 
-# Rotate the image by 45 degrees
 
 (h, w) = image.shape[:2]
 
@@ -72,7 +69,7 @@ plt.show()
 
 
 
-# Increase brightness by adding 50 to all pixel values
+
 
 brightness_matrix = np.ones(image.shape, dtype="uint8") * 50
 
@@ -88,7 +85,6 @@ plt.show()
 
 
 
-# Save the output images
 
 cv2.imwrite('output_images/grayscale_image.jpg', gray_image)
 
